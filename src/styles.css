@@ -110,11 +110,11 @@
 
 /* Light-mode prose styles */
 .prose {
-  color: #9292ff; /* gray-900 */
+  color: #111827; /* gray-900 */
 }
 
 .prose h1, .prose h2, .prose h3, .prose h4 {
-  color: #9292ff; /* gray-900/950 */
+  color: #0f172a; /* gray-900/950 */
   font-weight: 600;
   margin-top: 1em;
   margin-bottom: 0.5em;
