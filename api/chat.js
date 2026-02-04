@@ -14,7 +14,6 @@ export default async function handler(req) {
   try {
     const { messages, model } = await req.json();
 
-    // Get API keys from environment
     const googleKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     const mistralKey = process.env.MISTRAL_API_KEY;
 
@@ -57,10 +56,11 @@ export default async function handler(req) {
     
     return result.toDataStreamResponse();
   } catch (err) {
-    console.error("Error:", err);
+    console.error("API Error:", err);
     return new Response(JSON.stringify({ 
       error: "Failed to process request",
-      details: err.message 
+      details: err.message,
+      stack: err.stack
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
