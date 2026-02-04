@@ -14,15 +14,42 @@ export default async function handler(req) {
   try {
     const { messages, model } = await req.json();
 
+    // Get API keys from environment
+    const googleKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const mistralKey = process.env.MISTRAL_API_KEY;
+
+    if (!googleKey && !mistralKey) {
+      return new Response(JSON.stringify({ error: "API keys not configured" }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     let llm;
     if (model.includes("mistral") || model.includes("codestral")) {
-      llm = mistral(model);
+      if (!mistralKey) {
+        return new Response(JSON.stringify({ error: "Mistral API key not configured" }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      llm = mistral(model, { apiKey: mistralKey });
     } else if (model.includes("gemini")) {
-      llm = google(model);
-    } else if (model.includes("gpt")) {
-      llm = google("gemini-2.0-flash-exp");
+      if (!googleKey) {
+        return new Response(JSON.stringify({ error: "Google API key not configured" }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      llm = google(model, { apiKey: googleKey });
     } else {
-      llm = google("gemini-2.0-flash-exp");
+      if (!googleKey) {
+        return new Response(JSON.stringify({ error: "Google API key not configured" }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      llm = google("gemini-2.0-flash-exp", { apiKey: googleKey });
     }
 
     const modelMessages = await convertToModelMessages(messages);
@@ -31,7 +58,10 @@ export default async function handler(req) {
     return result.toDataStreamResponse();
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: "Failed to process request" }), {
+    return new Response(JSON.stringify({ 
+      error: "Failed to process request",
+      details: err.message 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
