@@ -1,16 +1,8 @@
-import { streamText, convertToModelMessages } from "ai";
+import { streamText } from "ai";
 import { google } from "@ai-sdk/google";
 import { mistral } from "@ai-sdk/mistral";
 
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function handler(req) {
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
+export default async function POST(req) {
   try {
     const { messages, model } = await req.json();
 
@@ -18,63 +10,38 @@ export default async function handler(req) {
     const mistralKey = process.env.MISTRAL_API_KEY;
 
     if (!googleKey && !mistralKey) {
-      return new Response(JSON.stringify({ error: "API keys not configured" }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return Response.json({ error: "API keys not configured" }, { status: 500 });
     }
 
     let llm;
     if (model.includes("mistral") || model.includes("codestral")) {
       if (!mistralKey) {
-        return new Response(JSON.stringify({ error: "Mistral API key not configured" }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return Response.json({ error: "Mistral API key not configured" }, { status: 500 });
       }
       llm = mistral(model, { apiKey: mistralKey });
     } else if (model.includes("gemini")) {
       if (!googleKey) {
-        return new Response(JSON.stringify({ error: "Google API key not configured" }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return Response.json({ error: "Google API key not configured" }, { status: 500 });
       }
       llm = google(model, { apiKey: googleKey });
     } else {
       if (!googleKey) {
-        return new Response(JSON.stringify({ error: "Google API key not configured" }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return Response.json({ error: "Google API key not configured" }, { status: 500 });
       }
       llm = google("gemini-2.0-flash-exp", { apiKey: googleKey });
     }
 
-    const modelMessages = await convertToModelMessages(messages);
-    const result = streamText({ model: llm, messages: modelMessages });
+    const result = streamText({
+      model: llm,
+      messages: messages,
+    });
     
-    return result.pipeUIMessageStreamToResponse(
-      new ReadableStream({
-        async start(controller) {
-          for await (const chunk of result) {
-            controller.enqueue(new TextEncoder().encode(chunk));
-          }
-          controller.close();
-        }
-      }), {
-        headers: { 'Content-Type': 'text/event-stream' }
-      }
-    );
+    return result.toTextStreamResponse();
   } catch (err) {
     console.error("API Error:", err);
-    return new Response(JSON.stringify({ 
+    return Response.json({ 
       error: "Failed to process request",
-      details: err.message,
-      stack: err.stack
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+      details: err.message
+    }, { status: 500 });
   }
 }

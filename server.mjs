@@ -5,10 +5,17 @@ import { google } from "@ai-sdk/google";
 import { mistral } from "@ai-sdk/mistral";
 import cors from "cors";
 import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.use(express.static(path.join(__dirname, 'dist')));
 
 app.post("/api/chat", async (req, res) => {
   try {
@@ -44,4 +51,9 @@ app.post("/api/telemetry", async (req, res) => {
   }
 });
 
-app.listen(3001, () => console.log("Server running on :3001"));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`Server running on :${PORT}`));
