@@ -159,13 +159,32 @@ The application includes comprehensive error handling, retry logic, and performa
 
 ## Production Deployment
 
-1. Set environment variables in hosting platform
-2. Build frontend: `npm run build`
-3. Deploy `dist/` folder to CDN/static host
-4. Deploy `server.mjs` to Node.js hosting (Vercel, Railway, etc.)
-5. Update CORS origins in `server.mjs`
-6. Enable HTTPS
-7. Add monitoring/logging
+### Deploy to Render.com
+
+1. **Create Web Service**
+   - Go to [Render.com](https://render.com)
+   - Click "New" → "Web Service"
+   - Connect your GitHub repository
+
+2. **Configure Service**
+   - **Name**: `react-ai-chat`
+   - **Environment**: `Node`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `node server.mjs`
+
+3. **Add Environment Variables**
+   - `GOOGLE_GENERATIVE_AI_API_KEY` = your-google-api-key
+   - `MISTRAL_API_KEY` = your-mistral-api-key
+   - `PORT` = (leave empty, Render sets automatically)
+
+4. **Deploy**
+   - Click "Create Web Service"
+   - Render will build and deploy automatically
+   - Your app will be available at: `https://your-app.onrender.com`
+
+### Alternative: Deploy to Railway/Vercel
+
+See deployment guides for [Railway](https://railway.app) or [Vercel](https://vercel.com) in their respective documentation.
 
 ## License
 
