@@ -54,7 +54,18 @@ export default async function handler(req) {
     const modelMessages = await convertToModelMessages(messages);
     const result = streamText({ model: llm, messages: modelMessages });
     
-    return result.toDataStreamResponse();
+    return result.pipeUIMessageStreamToResponse(
+      new ReadableStream({
+        async start(controller) {
+          for await (const chunk of result) {
+            controller.enqueue(new TextEncoder().encode(chunk));
+          }
+          controller.close();
+        }
+      }), {
+        headers: { 'Content-Type': 'text/event-stream' }
+      }
+    );
   } catch (err) {
     console.error("API Error:", err);
     return new Response(JSON.stringify({ 
